@@ -8,7 +8,7 @@
    using Printf
    
    # Fonction de modélisation implicite du problème
-   function model_musee_implicite3(solverSelected::DataType, A::Vector{Vector{Tuple{Int64,Int64}}}, b::Vector{Int64})
+   function model_solve(solverSelected::DataType, A::Vector{Vector{Tuple{Int64,Int64}}}, b::Vector{Int64})
        # Déclaration d'un modèle (initialement vide)
        m::Model = Model(solverSelected)
    
@@ -49,7 +49,7 @@
        b::Vector{Int64} = [1,3,7,3,12,4,9,4,3]
    
        # Création d'un modèle complété à partir des données
-       m::Model = model_musee_implicite3(GLPK.Optimizer,A,b)
+       m::Model = model_solve(GLPK.Optimizer,A,b)
    
        #print(m)
    
