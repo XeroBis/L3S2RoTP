@@ -4,7 +4,7 @@ using JuMP, GLPK
 using Printf
 
 # Fonction de modélisation implicite du problème
-function model_solve(solverSelected::DataType, ZP::Vector{Tuple{Int64, Int64}}, nbSLIC::Int64)
+function model_solve(solverSelected::DataType, ZP::Vector{Tuple{Int64, Int64}}, ZC::Vector{Tuple{Int64, Int64}}, CNord::Vector{Int64}, COuest::Vector{Int64}, nbSLIC::Int64)
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
 
@@ -16,15 +16,15 @@ function model_solve(solverSelected::DataType, ZP::Vector{Tuple{Int64, Int64}}, 
     @objective(m, Min, sum(x[i] for i in 1:nbVar))
 
     # Déclaration des contraintes
-    @constraint(m, contrZP[(i,j)=ZP], x[i] + x[j] >= 1)
+    @constraint(m, contrZP[(i,j) in ZP], x[i] + x[j] >= 1)
 
-    @constraint(m, contrLConsec[i=8:12], x[i] + x[i+1] <= 1)
+    @constraint(m, contrLConsec[i in COuest[1]:COuest[end]-1], x[i] + x[i+1] <= 1)
 
-    @constraint(m, contrC1L8, x[1] + x[8] >= 1)
+    @constraint(m, contrArbitraire[(i, j) in ZC], x[i] + x[j] >= 1)
 
-    @constraint(m, contrMoreInNorth, sum(x[i] for i in 1:7) >= 0.5 * sum(x[j] for j in 1:13))
+    @constraint(m, contrMoreInNorth, sum(x[i] for i in CNord) >= 0.5 * sum(x[j] for j in 1:nbSLIC))
 
-
+    # println(m)
     
     # Valeur retournée
     return m
@@ -34,10 +34,15 @@ function model_solve_tp2_3()
     # Déclaration des données
     nbSLIC::Int64 = 13
 
+    CNord::Vector{Int64} = [1, 2, 3, 4, 5, 6, 7]
+    COuest::Vector{Int64} = [8, 9, 10, 11, 12, 13]
+
     ZP::Vector{Tuple{Int64, Int64}} = [(1,11), (2,11), (3,9), (4,8), (4,13), (5,10), (6,11)]
 
+    ZC::Vector{Tuple{Int64, Int64}} = [(1, 8)]
+
     # Création d'un modèle complété à partir des données
-    m::Model = model_solve(GLPK.Optimizer, ZP, nbSLIC)
+    m::Model = model_solve(GLPK.Optimizer, ZP, ZC, CNord, COuest, nbSLIC)
 
     #print(m)
 

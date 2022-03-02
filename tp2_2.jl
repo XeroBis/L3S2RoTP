@@ -4,7 +4,7 @@ using JuMP, GLPK
 using Printf
 
 # Fonction de modélisation implicite du problème
-function model_solve(solverSelected::DataType, Pop::Vector{Int64}, J::Vector{Vector{Char}}, p::Int64, indVille::Vector{Char})
+function model_solve(solverSelected::DataType, Pop::Dict{Char, Int64}, J::Dict{Char,Vector{Char}}, p::Int64, indVille::Vector{Char})
     # Déclaration d'un modèle (initialement vide)
     m::Model = Model(solverSelected)
 
@@ -12,16 +12,17 @@ function model_solve(solverSelected::DataType, Pop::Vector{Int64}, J::Vector{Vec
     # Déclaration des variables
     @variable(m, x[indVille], binary = true)
 
-    @variable(m, y[1:nbVar], binary = true)
+    @variable(m, y[indVille], binary = true)
 
     # Déclaration de la fonction objectif (avec le sens d'optimisation)
-    @objective(m, Max, sum(y[i] * Pop[i] for i in 1:nbVar))
+    @objective(m, Max, sum(y[i] * Pop[i] for i in indVille))
 
     # Déclaration des contraintes
     @constraint(m, contrNbUsine, sum(x[i] for i in indVille) == p)
 
-    @constraint(m, contr2[i=1:nbVar], sum(x[j] for j in J[i]) >= y[i])
+    @constraint(m, contr2[i in indVille], sum(x[j] for j in J[i]) >= y[i])
     
+    println(m)
     # Valeur retournée
     return m
 end
@@ -30,25 +31,37 @@ function model_solve_tp2_2()
     # Déclaration des données
     indVille = collect('A':'M')
 
-    J = Vector{Vector{Char}}(undef,13)
-    J[1] = ['A','B','C','D'] # A
-    J[2] = ['A','B','C', 'D', 'E', 'F', 'G'] # B
-    J[3] = ['A','B','C', 'D'] # C
-    J[4] = ['A','B','C','D', 'E', 'F', 'G','J', 'K'] #D
-    J[5] = ['B','D','E','F','G','I', 'J', 'K'] #E
-    J[6] = ['B','D','E', 'F', 'G', 'I', 'J', 'K'] #F
-    J[7] = ['B','D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'] #G
-    J[8] = ['G','H','I','J','K', 'L', 'M'] #H
-    J[9] = ['E','F','G', 'H', 'I', 'J', 'K', 'L'] #I
-    J[10] = ['D', 'E','F', 'G', 'H', 'I', 'J', 'K', 'L'] #J
-    J[11] = ['D', 'E', 'F','G', 'H', 'I', 'J', 'K', 'L'] #K
-    J[12] = ['H', 'I','J','K', 'L', 'M'] #L
-    J[13] = ['H', 'L', 'M'] # M
+
+    J::Dict{Char,Vector{Char}} = Dict('A' => ['A','B','C','D'],
+                                       'B' => ['A','B','C', 'D', 'E', 'F', 'G'],
+                                       'C' => ['A','B','C', 'D'],
+                                       'D' => ['A','B','C','D', 'E', 'F', 'G','J', 'K'],
+                                       'E' => ['B','D','E','F','G','I', 'J', 'K'],
+                                       'F' => ['B','D','E', 'F', 'G', 'I', 'J', 'K'],
+                                       'G' => ['B','D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'],
+                                       'H' => ['G','H','I','J','K', 'L', 'M'],
+                                       'I' => ['E','F','G', 'H', 'I', 'J', 'K', 'L'],
+                                       'J' => ['D', 'E','F', 'G', 'H', 'I', 'J', 'K', 'L'],
+                                       'K' => ['D', 'E', 'F','G', 'H', 'I', 'J', 'K', 'L'],
+                                       'L' => ['H', 'I','J','K', 'L', 'M'],
+                                       'M' => ['H', 'L', 'M'])
     
-    P::Vector{Int64} = [53, 46, 16, 28, 96, 84, 32,21, 15, 22, 41, 53, 66];
+    P::Dict{Char, Int64} = Dict('A' => 53, 
+                              'B' => 46,
+                              'C' => 16,
+                              'D' => 28,
+                              'E' => 96,
+                              'F' => 84,
+                              'G' => 32,
+                              'H' => 21,
+                              'I' => 15,
+                              'J' => 22,
+                              'K' => 41,
+                              'L' => 53,
+                              'M' => 66)
 
     # Création d'un modèle complété à partir des données
-    m::Model = model_solve(GLPK.Optimizer, P, J, 2, indVille)
+    m::Model = model_solve(GLPK.Optimizer, P, J, 1, indVille)
 
     #print(m)
 
